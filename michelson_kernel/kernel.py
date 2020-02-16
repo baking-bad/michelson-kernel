@@ -1,4 +1,3 @@
-import yaml
 from copy import deepcopy
 from pprint import pformat
 from tabulate import tabulate
@@ -12,6 +11,8 @@ from pytezos.repl.arithmetic import *
 from pytezos.repl.structures import *
 
 from michelson_kernel.version import __version__
+from michelson_kernel.suggest import parse_token, get_suggests
+from michelson_kernel.docs import docs
 
 
 def is_stack(result):
@@ -132,7 +133,34 @@ class MichelsonKernel(Kernel):
         return self.send_result(silent, res)
 
     def do_complete(self, code, cursor_pos):
-        pass
+        token, begin_pos, end_pos = parse_token(code, cursor_pos)
+        suggests = get_suggests(token)
+        if suggests:
+            res = {
+                'matches': suggests,
+                'cursor_start': begin_pos,
+                'cursor_end': end_pos
+            }
+        else:
+            res = {
+                'matches': [],
+                'cursor_start': cursor_pos,
+                'cursor_end': cursor_pos
+            }
+
+        res['status'] = 'ok'
+        return res
 
     def do_inspect(self, code, cursor_pos, detail_level=0):
-        pass
+        token, _, _ = parse_token(code, cursor_pos)
+        docstring = docs.get(token)
+        if docstring:
+            res = {
+                'found': True,
+                'data': {'text/plain': docstring}
+            }
+        else:
+            res = {'found': False}
+
+        res['status'] = 'ok'
+        return res

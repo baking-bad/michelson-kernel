@@ -14,7 +14,7 @@ kernel_json = {
     "language": "michelson",
     "codemirror_mode": "michelson"
 }
-kernel_js_path = join(dirname(__file__), 'assets', 'kernel.js')
+kernel_js_path = join(dirname(__file__), 'scripts', 'kernel.js')
 
 
 class install_with_kernelspec(install):
@@ -30,7 +30,7 @@ class install_with_kernelspec(install):
             with open(os.path.join(td, 'kernel.json'), 'w') as f:
                 json.dump(kernel_json, f, sort_keys=True)
 
-            kernel_spec.install_kernel_spec(td, 'michelson', user=self.user)
+            kernel_spec.install_kernel_spec(td, 'michelson', user=os.environ['USER'])
 
 
 with open('README.md') as f:
@@ -57,8 +57,7 @@ setup(name='michelson-kernel',
           'pytezos>=2.3.0',
           'tabulate>=0.7.5',
           'jupyter-client',
-          'ipykernel',
-          'yaml'
+          'ipykernel'
       ],
       classifiers=[
           'Intended Audience :: Developers',
