@@ -5,12 +5,27 @@
 
 Jupyter kernel for the Michelson language
 
-## How to use
+## Features
+* Custom interpreter with runtime type checker
+* Syntax highlighter
+* Autocomplete by `Tab`
+* Inplace docstrings by `Shift+Tab`
+* Macros support
+* Verbose execution logging
+* Debug helpers
 
-### Run online!
+## Purposes
+* Learning
+* Demonstration
+* Fast prototyping
+* Case investigation
+
+## How to install
+
+### Option 1: run online!
 Powered by awesome Binder: https://mybinder.org/v2/gh/baking-bad/michelson-kernel/binder?filepath=michelson_quickstart.ipynb
 
-### Run in docker
+### Option 2: run in docker
 0. Get the latest image from dockerhub (only when new releases are published)
 ```
 docker pull bakingbad/michelson-kernel
@@ -22,7 +37,7 @@ docker run --rm -it -p 127.0.0.1:8888:8888 -v $(pwd):/home/jupyter/notebooks bak
 2. Open the link from container output in your browser
 3. Save notebooks in the mapped folder in order not to loose them
 
-### Install python package
+### Option 3: install python package
 1. Install the package using pip
 ```
 pip install michelson-kernel
@@ -32,7 +47,7 @@ pip install michelson-kernel
 jupyter kernelspec list
 ```
 
-### Install from sources
+### Option 4: install from sources
 1. Ensure the following packages are installed: `libssl-dev zlib1g-dev uuid-dev`
 2. Get the sources, build and install
 ```
@@ -45,7 +60,7 @@ make
 jupyter kernelspec list
 ```
 
-### Uninstall
+## How to uninstall
 1. Run the following command
 ```
 jupyter kernelspec uninstall michelson -f
@@ -54,3 +69,43 @@ jupyter kernelspec uninstall michelson -f
 ```
 jupyter kernelspec list
 ```
+3. Uninstall Python package
+```
+pip uninstall michelson-kernel
+```
+
+## How it works
+
+### Basics
+
+#### Cells and the stack state
+
+#### Single instruction
+
+#### `DUMP` and `DROP_ALL` helpers
+
+#### Instruction sequences
+
+#### The `PRINT` helper
+
+#### Disable `DEBUG` mode
+
+#### Runtime errors
+
+### Blockchain-specific instructions
+
+#### The `PATCH` helper
+
+#### Default values
+
+### Contract structure
+
+#### `parameter` / `storage` / `code` sections
+
+#### `INCLUDE` and `RUN` helpers
+
+### Advanced
+
+#### Entrypoints
+
+#### Big Maps
