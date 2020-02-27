@@ -35,7 +35,7 @@ define([
                 { regex: /(?<=\s|^)(?:@[A-z_0-9%]+)(?=\s|$)/, token: "atom" },
                 { regex: /(?<=\s|^)(?::[A-z_0-9]+)(?=\s|$)/, token: "atom" },
                 // helpers
-                { regex: /(?<=\s|;|\{|^)(?:TOP|EXPAND)(?=\s|;|\}|$)/, token: "def" },
+                { regex: /(?<=\s|;|\{|^)(?:DUMP|PRINT|DROP_ALL|EXPAND|RUN|PATCH|INCLUDE)(?=\s|;|\}|$)/, token: "def" },
                 // fallback
                 { regex: /[^\s]+/, token: "variable"}
             ],

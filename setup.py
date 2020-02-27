@@ -6,7 +6,7 @@ import json
 import os
 import sys
 
-from michelson_kernel.version import __version__
+from michelson_kernel import __version__
 
 kernel_json = {
     "argv": [sys.executable, "-m", "michelson_kernel", "-f", "{connection_file}"],
