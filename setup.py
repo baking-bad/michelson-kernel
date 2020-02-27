@@ -14,7 +14,7 @@ kernel_json = {
     "language": "michelson",
     "codemirror_mode": "michelson"
 }
-kernel_js_path = join(dirname(__file__), 'scripts', 'kernel.js')
+kernel_js_path = join(dirname(__file__), 'michelson_kernel', 'kernel.js')
 
 
 class install_with_kernelspec(install):
@@ -30,7 +30,7 @@ class install_with_kernelspec(install):
             with open(os.path.join(td, 'kernel.json'), 'w') as f:
                 json.dump(kernel_json, f, sort_keys=True)
 
-            kernel_spec.install_kernel_spec(td, 'michelson', user=os.environ['USER'])
+            kernel_spec.install_kernel_spec(td, 'michelson', user=self.user)
 
 
 with open('README.md') as f:
@@ -47,12 +47,17 @@ setup(name='michelson-kernel',
       license='MIT',
       description='Jupyter kernel for the Michelson language',
       long_description=readme,
+      long_description_content_type='text/markdown',
       author='Michael Zaikin (Baking Bad)',
       author_email='mz@baking-bad.org',
       url='https://github.com/baking-bad/michelson-kernel',
       packages=['michelson_kernel'],
       cmdclass={'install': install_with_kernelspec},
       keywords=['Tezos', 'Michelson', 'Jupyter'],
+      package_data={
+          'michelson_kernel': ['kernel.js'],
+          '': ['README.md']
+      },
       install_requires=[
           'pytezos>=2.3.0',
           'tabulate>=0.7.5',

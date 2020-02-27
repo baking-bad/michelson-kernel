@@ -3,8 +3,9 @@ debug:
 	pip install . --force --no-deps
 
 publish:
-	python setup.py dist
+	python setup.py sdist
 	twine upload dist/*
+	rm -rf dist/
 
 remove:
 	jupyter kernelspec uninstall michelson -f
