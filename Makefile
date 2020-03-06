@@ -1,6 +1,5 @@
 debug:
-	$(MAKE) remove
-	pip install . --force --no-deps
+	pip install . --force --no-deps --user
 
 publish:
 	python setup.py sdist
@@ -12,3 +11,6 @@ remove:
 
 docs:
 	python -m scripts.gen_docs_py
+
+kernel:
+	python -m michelson_kernel

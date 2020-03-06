@@ -22,27 +22,31 @@ Jupyter kernel for the Michelson language
 
 ## How to install
 
-### Option 1: run online!
+### Option 1: try online!
 Powered by awesome Binder: https://mybinder.org/v2/gh/baking-bad/michelson-kernel/binder?filepath=michelson_quickstart.ipynb
 
 ### Option 2: run in docker
-0. Get the latest image from dockerhub (only when new releases are published)
+1. Get the latest image from dockerhub (only when new releases are published)
 ```
 docker pull bakingbad/michelson-kernel
 ```
-1. Create container using verified docker image:
+2. Create container using verified docker image:
 ```
 docker run --rm -it -p 127.0.0.1:8888:8888 -v $(pwd):/home/jupyter/notebooks bakingbad/michelson-kernel
 ```
-2. Open the link from container output in your browser
-3. Save notebooks in the mapped folder in order not to loose them
+3. Open the link from container output in your browser
+4. Save notebooks in the mapped folder in order not to loose them
 
 ### Option 3: install python package
-1. Install the package using pip
+1. Ensure you have several crypto libraries installed (see [pytezos docs](https://baking-bad.github.io/pytezos/#requirements)):
+```
+sudo apt install libsodium-dev libsecp256k1-dev libgmp-dev
+```
+2. Install the package using pip
 ```
 pip install michelson-kernel
 ```
-2. Check that Jupyter is now supporting Michelson kernel
+3. Check that Jupyter is now supporting Michelson kernel
 ```
 jupyter kernelspec list
 ```
@@ -76,36 +80,8 @@ pip uninstall michelson-kernel
 
 ## How it works
 
-### Basics
 
-#### Cells and the stack state
-
-#### Single instruction
-
-#### `DUMP` and `DROP_ALL` helpers
-
-#### Instruction sequences
-
-#### The `PRINT` helper
-
-#### Disable `DEBUG` mode
-
-#### Runtime errors
-
-### Blockchain-specific instructions
-
-#### The `PATCH` helper
-
-#### Default values
-
-### Contract structure
-
-#### `parameter` / `storage` / `code` sections
-
-#### `INCLUDE` and `RUN` helpers
-
-### Advanced
-
-#### Entrypoints
-
-#### Big Maps
+## Acknowledgments
+* This project is supported by Tezos Foundation
+* Michelson test set from the Tezos repo is used to ensure the interpreter workability
+* Michelson structured documentation by Nomadic Labs is used for inline help

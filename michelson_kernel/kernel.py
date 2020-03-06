@@ -1,6 +1,7 @@
 from tabulate import tabulate
 from ipykernel.kernelbase import Kernel
 
+from pytezos.repl.helpers import helpers_prim
 from pytezos.michelson.macros import primitives
 from pytezos.repl.interpreter import Interpreter
 
@@ -28,17 +29,38 @@ def parse_token(line, cursor_pos):
     return line[begin_pos:end_pos], begin_pos, end_pos
 
 
+def html_table(items):
+    def pre(s):
+        return f'<pre style="text-align: left;">{s}</pre>'
+
+    def pre_dict(d):
+        return {k: pre(v) for k, v in d.items()}
+
+    return tabulate(list(map(pre_dict, items)), tablefmt='html', headers="keys")
+
+
+def plain_table(items):
+    return tabulate(items, tablefmt='simple', headers="keys")
+
+
 def format_result(result, execution_count):
-    if isinstance(result, list):
-        data = {
-            'text/plain': tabulate(result, tablefmt='simple'),
-            'text/html': tabulate(result, tablefmt='html')}
+    kind = result['kind']
+    if kind in ['message', 'code']:
+        plain, html = result['value'], result['value']
+    elif kind in ['stack', 'big_map_diff']:
+        plain = plain_table(result['value'])
+        html = html_table(result['value'])
+    elif kind == 'output':
+        ops, storage, bmd = result['value']
+        data = list(filter(lambda x: len(x) > 0, [storage, bmd, ops]))
+        plain = '\n'.join(map(plain_table, data))
+        html = '<br>'.join(map(html_table, data))
     else:
-        data = {'text/plain': result}
-    return {
-        'data': data,
-        'metadata': {},
-        'execution_count': execution_count}
+        assert False, kind
+    return {'data': {'text/plain': plain,
+                     'text/html': html},
+            'metadata': {},
+            'execution_count': execution_count}
 
 
 class MichelsonKernel(Kernel):
@@ -58,7 +80,7 @@ class MichelsonKernel(Kernel):
 
     def __init__(self, **kwargs):
         super(MichelsonKernel, self).__init__(**kwargs)
-        self.interpreter = Interpreter()
+        self.interpreter = Interpreter(debug=False)
 
     def do_execute(self, code, silent, store_history=True, user_expressions=None, allow_stdin=False):
         int_res = self.interpreter.execute(code)
@@ -91,7 +113,7 @@ class MichelsonKernel(Kernel):
         token, begin_pos, end_pos = parse_token(code, cursor_pos)
 
         suggests = []
-        for word_set in [primitives, static_macros]:
+        for word_set in [primitives, static_macros, helpers_prim]:
             for word in word_set:
                 if word.startswith(token):
                     suggests.append(word)

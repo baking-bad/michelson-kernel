@@ -14,8 +14,16 @@ extra = {
 }
 
 
-def format_entry(title, descr):
-    return f'{title}\n{descr}' if descr else None
+def format_entry(title, concl, descr):
+    res = [title]
+    if isinstance(concl, list):
+        for x in concl:
+            res.append(x['conclusion'][7:])
+    if descr:
+        res.append(descr.replace('`', ''))
+    else:
+        return None
+    return '\n'.join(res)
 
 
 def generate():
@@ -29,7 +37,8 @@ def generate():
         for primitive, body in meta[section].items():
 
             docs[primitive] = format_entry(
-                title=sema[section].get(primitive, dict()).get(args_key, ''),
+                title=sema[section].get(primitive, {}).get(args_key, ''),
+                concl=sema[section].get(primitive, {}).get('ty', ''),
                 descr=body.get('documentation_short'))
 
     with open(target_path, 'w+') as f:

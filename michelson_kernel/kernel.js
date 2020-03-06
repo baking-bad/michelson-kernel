@@ -21,7 +21,7 @@ define([
                 // data
                 { regex: /(?<=\s|^)(?:Unit|True|False|Pair|Left|Right|Some|None|Elt)(?=\s|;|\)|$)/, token: "keyword" },
                 // instruction
-                { regex: /(?<=\s|^)(?:CAST|RENAME|DROP|DUP|SWAP|PUSH|SOME|NONE|UNIT|IF_NONE|PAIR|CAR|CDR|LEFT|RIGHT|IF_LEFT|IF_RIGHT|NIL|CONS|IF_CONS|SIZE|EMPTY_SET|EMPTY_MAP|MAP|ITER|MEM|GET|UPDATE|IF|LOOP|LOOP_LEFT|LAMBDA|EXEC|DIP|FAILWITH|CONCAT|SLICE|PACK|UNPACK|ADD|SUB|MUL|EDIV|ABS|NEG|LSL|LSR|OR|AND|XOR|NOT|COMPARE|EQ|NEQ|LT|GT|LE|GE|CHECK_SIGNATURE|BLAKE2B|SHA256|SHA512|HASH_KEY|DIG|DUG|EMPTY_BIG_MAP|APPLY)(?=\s|;|\}|$)/, token: "meta"},
+                { regex: /(?<=\s|^)(?:INT|ISNAT|CAST|RENAME|DROP|DUP|SWAP|PUSH|SOME|NONE|UNIT|IF_NONE|PAIR|CAR|CDR|LEFT|RIGHT|IF_LEFT|IF_RIGHT|NIL|CONS|IF_CONS|SIZE|EMPTY_SET|EMPTY_MAP|MAP|ITER|MEM|GET|UPDATE|IF|LOOP|LOOP_LEFT|LAMBDA|EXEC|DIP|FAILWITH|CONCAT|SLICE|PACK|UNPACK|ADD|SUB|MUL|EDIV|ABS|NEG|LSL|LSR|OR|AND|XOR|NOT|COMPARE|EQ|NEQ|LT|GT|LE|GE|CHECK_SIGNATURE|BLAKE2B|SHA256|SHA512|HASH_KEY|DIG|DUG|EMPTY_BIG_MAP|APPLY)(?=\s|;|\}|$)/, token: "meta"},
                 { regex: /(?<=\s|^)(?:SELF|CONTRACT|TRANSFER_TOKENS|SET_DELEGATE|CREATE_CONTRACT|IMPLICIT_ACCOUNT|NOW|AMOUNT|BALANCE|STEPS_TO_QUOTA|SOURCE|SENDER|ADDRESS|CHAIN_ID)(?=\s|;|\}|$)/, token: "operator"},
                 // type
                 { regex: /(?<=\s|^)(?:option|list|set|contract|pair|or|lambda|map|big_map)(?=\s|\)|$)/, token: "builtin" },
@@ -32,10 +32,10 @@ define([
                 { regex: /(?<=\s|^)(?:(?:CMP|IF|IFCMP|ASSERT_|ASSERT_CMP)(?:EQ|NEQ|LT|GT|LE|GE))(?=\s|;|\}|\{|$)/, token: "string-2" },
                 // annotations
                 { regex: /(?<=\s|^)(?:%[A-z_0-9%@]*)/, token: "atom" },
-                { regex: /(?<=\s|^)(?:@[A-z_0-9%]+)(?=\s|$)/, token: "atom" },
-                { regex: /(?<=\s|^)(?::[A-z_0-9]+)(?=\s|$)/, token: "atom" },
+                { regex: /(?<=\s|^)(?:@[A-z_0-9%]+)/, token: "atom" },
+                { regex: /(?<=\s|^)(?::[A-z_0-9]+)/, token: "atom" },
                 // helpers
-                { regex: /(?<=\s|;|\{|^)(?:DUMP|PRINT|DROP_ALL|EXPAND|RUN|PATCH|INCLUDE)(?=\s|;|\}|$)/, token: "def" },
+                { regex: /(?<=\s|;|\{|^)(?:DUMP|PRINT|DROP_ALL|EXPAND|RUN|PATCH|INCLUDE|DEBUG|BIG_MAP_DIFF|BEGIN|COMMIT)(?=\s|;|\}|$)/, token: "def" },
                 // fallback
                 { regex: /[^\s]+/, token: "variable"}
             ],
