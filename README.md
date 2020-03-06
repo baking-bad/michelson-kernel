@@ -79,7 +79,9 @@ pip uninstall michelson-kernel
 ```
 
 ## How it works
-
+Check out this introduction:  
+https://nbviewer.jupyter.org/github/baking-bad/michelson-kernel/blob/binder/michelson_quickstart.ipynb  
+Or [try it](https://mybinder.org/v2/gh/baking-bad/michelson-kernel/binder?filepath=michelson_quickstart.ipynb) in a Michelson notebook!
 
 ## Acknowledgments
 * This project is supported by Tezos Foundation
