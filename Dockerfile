@@ -9,7 +9,7 @@ RUN useradd -ms /bin/bash jupyter
 USER jupyter
 WORKDIR /home/jupyter
 
-RUN pip install pytezos>=2.3.3 michelson-kernel>=0.1.3 --user
+RUN pip install --user michelson-kernel>=0.1.3
 
 EXPOSE 8888
 ENTRYPOINT [ "jupyter",  "notebook", "--port=8888", "--ip=0.0.0.0", "--no-browser", "--no-mathjax"]
