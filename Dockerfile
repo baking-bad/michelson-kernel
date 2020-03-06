@@ -24,7 +24,7 @@ RUN chown -R ${NB_USER}:${NB_USER} ${HOME}/
 WORKDIR ${HOME}
 USER ${USER}
 
-RUN pip install pytezos>=2.3.3 michelson-kernel>=0.1.3 --user
+RUN pip install --user michelson-kernel>=0.1.3
 
 EXPOSE 8888
 ENTRYPOINT []
