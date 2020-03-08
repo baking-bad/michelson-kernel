@@ -5,6 +5,8 @@
 
 Jupyter kernel for the Michelson language
 
+![michelson](https://cdn-images-1.medium.com/max/800/1*r_kVx8Rsqa0TLcIaK_WUQw.gif)
+
 ## Features
 * Custom interpreter with runtime type checker
 * Syntax highlighter
