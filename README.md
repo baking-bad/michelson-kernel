@@ -16,12 +16,6 @@ Jupyter kernel for the Michelson language
 * Verbose execution logging
 * Debug helpers
 
-## Purposes
-* Learning
-* Demonstration
-* Fast prototyping
-* Case investigation
-
 ## How to install
 
 ### Option 1: try online!
@@ -81,11 +75,20 @@ pip uninstall michelson-kernel
 ```
 
 ## How it works
-Check out this introduction:  
+* Technical details of the REPL implementation  
+https://forum.tezosagora.org/t/michelson-repl-in-a-jupyter-notebook/1749
+* Interactive tutorial demonstrating REPL features  
+https://mybinder.org/v2/gh/baking-bad/michelson-kernel/binder?filepath=michelson_quickstart.ipynb
+* Same, but a rendered version  
 https://nbviewer.jupyter.org/github/baking-bad/michelson-kernel/blob/binder/michelson_quickstart.ipynb  
-Or [try it](https://mybinder.org/v2/gh/baking-bad/michelson-kernel/binder?filepath=michelson_quickstart.ipynb) in a Michelson notebook!
 
-## Acknowledgments
+
+## Contact
+* Telegram chat: [@baking_bad_chat](https://t.me/baking_bad_chat)
+* Slack channel: [#baking-bad](https://tezos-dev.slack.com/archives/CV5NX7F2L)
+
+
+## Credits
 * This project is supported by Tezos Foundation
 * Michelson test set from the Tezos repo is used to ensure the interpreter workability
 * Michelson structured documentation by Nomadic Labs is used for inline help
