@@ -59,7 +59,7 @@ setup(name='michelson-kernel',
           '': ['README.md']
       },
       install_requires=[
-          'pytezos>=2.3.4',
+          'pytezos>=2.3.5',
           'tabulate>=0.7.5',
           'jupyter-client',
           'ipykernel'
