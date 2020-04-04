@@ -35,35 +35,36 @@ docker run --rm -it -p 127.0.0.1:8888:8888 -v $(pwd):/home/jupyter/notebooks bak
 4. Save notebooks in the mapped folder in order not to loose them
 
 ### Option 3: install python package
-0. Requires Python 3.5+. The recomended way to install it (especially if you plan to use multiple versions) is [pyenv](https://github.com/pyenv/pyenv-installer). Make sure you have all [necessary packets](https://github.com/pyenv/pyenv/wiki/Common-build-problems) installed. After that:
+1. Requires Python 3.5+. The recomended way to install it (especially if you plan to use multiple versions) is [pyenv](https://github.com/pyenv/pyenv-installer). Make sure you have all [necessary packets](https://github.com/pyenv/pyenv/wiki/Common-build-problems) installed. After that:
 ```
 pyenv install 3.7.0
 pyenv local 3.7.0   # per folder
 pyenv global 3.7.9  # per system
 ```
 
-1. Ensure you have several crypto libraries installed (see [pytezos docs](https://baking-bad.github.io/pytezos/#requirements)):
+2. Ensure you have several crypto libraries installed (see [pytezos docs](https://baking-bad.github.io/pytezos/#requirements)):
 ```
 sudo apt install libsodium-dev libsecp256k1-dev libgmp-dev
 ```
-2. Install the package using pip
+3. Install the package using pip
 ```
 pip install michelson-kernel
 ```
-3. Check that Jupyter is now supporting Michelson kernel
+4. Check that Jupyter is now supporting Michelson kernel
 ```
 jupyter kernelspec list
 ```
 
 ### Option 4: install from sources
-1. Ensure the following packages are installed: `libssl-dev zlib1g-dev uuid-dev`
-2. Get the sources, build and install
+1. Follow steps 0 and 1 from "Option 3" to ensure you have correct Python version and packets required for the PyTezos library
+2. Ensure the following packages are installed: `libssl-dev zlib1g-dev uuid-dev`
+3. Get the sources, build and install
 ```
 git clone https://github.com/baking-bad/michelson-kernel
 cd michelson-kernel
 make
 ```
-3. Check that Jupyter is now supporting Michelson kernel
+4. Check that Jupyter is now supporting Michelson kernel
 ```
 jupyter kernelspec list
 ```
