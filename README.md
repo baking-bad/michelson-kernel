@@ -56,7 +56,7 @@ jupyter kernelspec list
 ```
 
 ### Option 4: install from sources
-1. Follow steps 0 and 1 from "Option 3" to ensure you have correct Python version and packets required for the PyTezos library
+1. Follow steps 1 and 2 from "Option 3" to ensure you have correct Python version and packets required for the PyTezos library
 2. Ensure the following packages are installed: `libssl-dev zlib1g-dev uuid-dev`
 3. Get the sources, build and install
 ```
