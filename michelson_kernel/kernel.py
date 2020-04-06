@@ -36,7 +36,9 @@ def html_table(items):
     def pre_dict(d):
         return {k: pre(v) for k, v in d.items()}
 
-    return tabulate(list(map(pre_dict, items)), tablefmt='html', headers="keys")
+    res = tabulate(list(map(pre_dict, items)), tablefmt='html', headers="keys")
+    res = res.replace('&lt;', '<').replace('&gt;', '>')  # tabulate escapes our <pre> tags
+    return res
 
 
 def plain_table(items):

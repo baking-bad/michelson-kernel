@@ -50,13 +50,22 @@ sudo apt install libsodium-dev libsecp256k1-dev libgmp-dev
 ```
 pip install michelson-kernel
 ```
-4. Check that Jupyter is now supporting Michelson kernel
+4. Install Jupyter
+```
+pip install jupyter
+```
+5. Check that Jupyter is now supporting Michelson kernel
 ```
 jupyter kernelspec list
 ```
+6. Run jupyter
+```
+jupyter notebook
+```
+Open the link from the command output, create new notebook with Michelson kernel.
 
 ### Option 4: install from sources
-1. Follow steps 1 and 2 from "Option 3" to ensure you have correct Python version and packets required for the PyTezos library
+1. Follow steps 1-2 from "Option 3" to ensure you have correct Python version and packets required for the PyTezos library
 2. Ensure the following packages are installed: `libssl-dev zlib1g-dev uuid-dev`
 3. Get the sources, build and install
 ```
@@ -64,10 +73,7 @@ git clone https://github.com/baking-bad/michelson-kernel
 cd michelson-kernel
 make
 ```
-4. Check that Jupyter is now supporting Michelson kernel
-```
-jupyter kernelspec list
-```
+4. Follow steps 4-6 from "Option 3"
 
 ## How to uninstall
 1. Run the following command
@@ -89,7 +95,11 @@ https://forum.tezosagora.org/t/michelson-repl-in-a-jupyter-notebook/1749
 * Interactive tutorial demonstrating REPL features  
 https://mybinder.org/v2/gh/baking-bad/michelson-kernel/binder?filepath=michelson_quickstart.ipynb
 * Same, but a rendered version  
-https://nbviewer.jupyter.org/github/baking-bad/michelson-kernel/blob/binder/michelson_quickstart.ipynb 
+https://nbviewer.jupyter.org/github/baking-bad/michelson-kernel/blob/binder/michelson_quickstart.ipynb
+
+### Sample notebooks
+Located in the current repository in a separate branch:  
+https://github.com/baking-bad/michelson-kernel/tree/binder
 
 ### List of helpers
 These instructions are not Michelson primitives and thus cannot be used outside of the Jupyter.  
