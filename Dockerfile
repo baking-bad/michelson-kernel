@@ -24,7 +24,7 @@ RUN chown -R ${NB_USER}:${NB_USER} ${HOME}/
 WORKDIR ${HOME}
 USER ${USER}
 
-RUN pip install --user michelson-kernel>=0.1.4
+RUN pip install --user michelson-kernel>=0.1.6
 
 EXPOSE 8888
 ENTRYPOINT []
