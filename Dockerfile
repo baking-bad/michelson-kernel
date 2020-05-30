@@ -19,6 +19,7 @@ RUN adduser --disabled-password \
     ${NB_USER}
 
 COPY michelson_quickstart.ipynb ${HOME}/
+COPY tzbtc_big_map_diff_parser.ipynb ${HOME}/
 RUN chown -R ${NB_USER}:${NB_USER} ${HOME}/
 
 WORKDIR ${HOME}
