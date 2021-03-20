@@ -30,7 +30,7 @@ class install_with_kernelspec(install):
             with open(os.path.join(td, 'kernel.json'), 'w') as f:
                 json.dump(kernel_json, f, sort_keys=True)
 
-            kernel_spec.install_kernel_spec(td, 'michelson', user=self.user)
+            kernel_spec.install_kernel_spec(td, 'michelson', user=self.user, prefix=sys.prefix)
 
 
 with open('README.md') as f:
@@ -58,8 +58,10 @@ setup(name='michelson-kernel',
           'michelson_kernel': ['kernel.js'],
           '': ['README.md']
       },
+
       install_requires=[
-          'pytezos>=2.3.5',
+          # FIXME: wheel installed in `make install`
+          # './pytezos-3.0.4-py3-none-any.whl',
           'tabulate>=0.7.5',
           'jupyter-client',
           'ipykernel'
