@@ -2,16 +2,16 @@ from collections import Iterable
 from traceback import format_exception
 from typing import List, Dict, Any, Optional
 
-from attr import dataclass
-from pytezos.michelson.instructions import CommitInstruction
+from pytezos.michelson.instructions import CommitInstruction, BigMapInstruction, BigMapDiffInstruction
 from pytezos.michelson.instructions.base import MichelsonInstruction
-from pytezos.michelson.micheline import MichelineSequence, Micheline, MichelsonRuntimeError
+from pytezos.michelson.micheline import MichelineSequence, MichelsonRuntimeError
 from pytezos.michelson.parse import MichelsonParserError
 from pytezos.michelson.stack import MichelsonStack
+from pytezos.michelson.types import PairType
 from tabulate import tabulate
 from ipykernel.kernelbase import Kernel
 
-from pytezos.michelson.repl import Interpreter, InterpreterResult
+from pytezos.michelson.repl import Interpreter
 from pytezos.michelson.tags import prim_tags
 from michelson_kernel import __version__
 from michelson_kernel.docs import docs
@@ -79,26 +79,48 @@ def preformat_stack_table(items: Iterable[MichelsonInstruction]) -> List[Dict[st
     ]
 
 
-def html_table(table: List[Dict[str, Any]]) -> str:
+def html_table(table: List[Dict[str, Any]], header: str) -> str:
     def pre(s):
         return f'<pre style="text-align: left;">{s}</pre>'
 
     def pre_dict(d):
         return {k: pre(v) for k, v in d.items()}
 
-    res = tabulate(list(map(pre_dict, table)), tablefmt='html', headers="keys")
-    res = res.replace('&lt;', '<').replace('&gt;', '>')  # tabulate escapes our <pre> tags
-    return res
+    result = f'<h4>{header}</h4>'
+    result += tabulate(list(map(pre_dict, table)), tablefmt='html', headers="keys")
+    result = result.replace('&lt;', '<').replace('&gt;', '>')  # tabulate escapes our <pre> tags
+    return result
 
 
-def plain_table(table: List[Dict[str, Any]]) -> str:
-    return tabulate(table, tablefmt='simple', headers='keys')
+def plain_table(table: List[Dict[str, Any]], header: str) -> str:
+    result = f'{header}\n'
+    return result + tabulate(table, tablefmt='simple', headers='keys')
 
 
-@dataclass(kw_only=True)
-class CellResult:
-    lazy_diff = None
-    stack_items = None
+def preformat_lazy_diff_table(lazy_diff: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    table = []
+    for diff in lazy_diff:
+        _id = diff['id']
+        diff = diff['diff']
+        if diff['action'] == 'alloc':
+            table.append(
+                {
+                    'id': _id,
+                    'action': 'alloc',
+                    'key': '',
+                    'key_hash': '',
+                    'value': '',
+                }
+            )
+        for update in diff['updates']:
+            table.append(
+                {
+                    'id': _id,
+                    'action': 'update',
+                    **update,
+                }
+            )
+    return table
 
 
 class MichelsonKernel(Kernel):
@@ -127,45 +149,57 @@ class MichelsonKernel(Kernel):
             {
                 'name': 'stdout',
                 'text': text,
-            }
+            },
         )
 
-    def _find_stack_items(self, operations: MichelineSequence, stack: MichelsonStack) -> Optional[List[MichelsonInstruction]]:
-        for operation in operations.items[::-1]:
+    def _find_stack_items(self, instructions: MichelineSequence, stack: MichelsonStack) -> Optional[List[MichelsonInstruction]]:
+        for operation in instructions.items[::-1]:
             items = getattr(operation, 'items', None)
             if isinstance(items, MichelineSequence):
-                stack_items = self._find_stack_items(operations, stack)
+                stack_items = self._find_stack_items(instructions, stack)
                 if stack_items:
                     return stack_items
             if not isinstance(operation, MichelsonInstruction):
                 continue
+            if isinstance(operation, CommitInstruction):
+                return operation.result
             if operation.stack_items_added:
                 return stack.items[-operation.stack_items_added:]
         return None
 
-    def _find_lazy_diff(self, operations: MichelineSequence) -> Optional[List[Dict[str, str]]]:
-        for operation in operations.items[::-1]:
-            if isinstance(operation, CommitInstruction) and operation.lazy_diff:
-                return operation.lazy_diff
+    def _find_lazy_diff(self, instructions: MichelineSequence) -> Optional[List[Dict[str, str]]]:
+        for instruction in instructions.items[::-1]:
+            if isinstance(instruction, CommitInstruction) and instruction.lazy_diff:
+                return instruction.lazy_diff
+            elif isinstance(instruction, BigMapDiffInstruction) and instruction.lazy_diff:
+                return instruction.lazy_diff
 
-    def _send_success_response(self, operations: MichelineSequence, stack: MichelsonStack) -> Dict[str, Any]:
+    def _find_result(self, instructions: MichelineSequence) -> Optional[PairType]:
+        for instruction in instructions.items[::-1]:
+            if isinstance(instruction, CommitInstruction):
+                return instruction.result
+
+    def _send_success_response(self, instructions: MichelineSequence, stack: MichelsonStack) -> Dict[str, Any]:
         plain, html = '', ''
 
-        modified_items = self._find_stack_items(operations, stack)
+        modified_items = self._find_stack_items(instructions, stack)
         if modified_items:
+            header = 'Result'
             table = preformat_stack_table(modified_items)
-            plain += plain_table(table)
-            html += html_table(table)
+            plain += plain_table(table, header)
+            html += html_table(table, header)
 
-        lazy_diff = self._find_lazy_diff(operations)
+        lazy_diff = self._find_lazy_diff(instructions)
         if lazy_diff:
-            plain += plain_table(lazy_diff)
-            html += html_table(lazy_diff)
+            header = 'BigMap diff'
+            lazy_diff_table = preformat_lazy_diff_table(lazy_diff)
+            plain += plain_table(lazy_diff_table, header)
+            html += html_table(lazy_diff_table, header)
 
         result = {
-                'data': {
+            'data': {
                 'text/plain': plain,
-                'text/html': html
+                'text/html': html,
             },
             'metadata': {},
             'execution_count': self.execution_count,
@@ -195,13 +229,11 @@ class MichelsonKernel(Kernel):
             {
                 'name': 'stderr',
                 'text': '\n'.join(traceback),
-            }
+            },
         )
         return result
 
-    def do_execute(
-        self, code, silent, store_history=True, user_expressions=None, allow_stdin=False
-    ):
+    def do_execute(self, code, silent, store_history=True, user_expressions=None, allow_stdin=False):
 
         interpreter_result = self.interpreter.execute(code)
 
@@ -210,7 +242,7 @@ class MichelsonKernel(Kernel):
 
         if not interpreter_result.error:
             if not silent:
-                return self._send_success_response(interpreter_result.operations, interpreter_result.stack)
+                return self._send_success_response(interpreter_result.instructions, interpreter_result.stack)
         else:
             return self._send_fail_response(interpreter_result.error)
         return {}
@@ -231,7 +263,11 @@ class MichelsonKernel(Kernel):
                 'cursor_end': end_pos,
             }
         else:
-            res = {'matches': [], 'cursor_start': cursor_pos, 'cursor_end': cursor_pos}
+            res = {
+                'matches': [],
+                'cursor_start': cursor_pos,
+                'cursor_end': cursor_pos,
+            }
 
         res['status'] = 'ok'
         return res
