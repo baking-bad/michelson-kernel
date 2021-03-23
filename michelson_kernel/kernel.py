@@ -1,7 +1,9 @@
 from collections import Iterable
 from traceback import format_exception
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
+from attr import dataclass
+from pytezos.michelson.instructions import CommitInstruction
 from pytezos.michelson.instructions.base import MichelsonInstruction
 from pytezos.michelson.micheline import MichelineSequence, Micheline, MichelsonRuntimeError
 from pytezos.michelson.parse import MichelsonParserError
@@ -66,7 +68,7 @@ def parse_token(line, cursor_pos):
     return line[begin_pos:end_pos], begin_pos, end_pos
 
 
-def preformat_table(items: Iterable[MichelsonInstruction]) -> List[Dict[str, Any]]:
+def preformat_stack_table(items: Iterable[MichelsonInstruction]) -> List[Dict[str, Any]]:
     return [
         {
             'index': i,
@@ -93,34 +95,10 @@ def plain_table(table: List[Dict[str, Any]]) -> str:
     return tabulate(table, tablefmt='simple', headers='keys')
 
 
-def format_result(operations: MichelineSequence, stack: MichelsonStack, execution_count: int):
-    for operation in operations.items[::-1]:
-        items = getattr(operation, 'items', None)
-        if isinstance(items, MichelineSequence):
-            return format_result(items, stack, execution_count)
-        if not isinstance(operation, MichelsonInstruction):
-            continue
-        if operation.stack_items_added:
-            modified_items = stack.items[-operation.stack_items_added:]
-            table = preformat_table(modified_items)
-            plain = plain_table(table)
-            html = html_table(table)
-            return {
-                'data': {
-                    'text/plain': plain,
-                    'text/html': html
-                },
-                'metadata': {},
-                'execution_count': execution_count,
-            }
-
-        return {}
-
-    return {
-        'data': {'text/plain': '', 'text/html': ''},
-        'metadata': {},
-        'execution_count': execution_count,
-    }
+@dataclass(kw_only=True)
+class CellResult:
+    lazy_diff = None
+    stack_items = None
 
 
 class MichelsonKernel(Kernel):
@@ -142,55 +120,100 @@ class MichelsonKernel(Kernel):
         super(MichelsonKernel, self).__init__(**kwargs)
         self.interpreter = Interpreter()
 
+    def _stdout(self, text: str) -> None:
+        self.send_response(
+            self.iopub_socket,
+            'stream',
+            {
+                'name': 'stdout',
+                'text': text,
+            }
+        )
+
+    def _find_stack_items(self, operations: MichelineSequence, stack: MichelsonStack) -> Optional[List[MichelsonInstruction]]:
+        for operation in operations.items[::-1]:
+            items = getattr(operation, 'items', None)
+            if isinstance(items, MichelineSequence):
+                stack_items = self._find_stack_items(operations, stack)
+                if stack_items:
+                    return stack_items
+            if not isinstance(operation, MichelsonInstruction):
+                continue
+            if operation.stack_items_added:
+                return stack.items[-operation.stack_items_added:]
+        return None
+
+    def _find_lazy_diff(self, operations: MichelineSequence) -> Optional[List[Dict[str, str]]]:
+        for operation in operations.items[::-1]:
+            if isinstance(operation, CommitInstruction) and operation.lazy_diff:
+                return operation.lazy_diff
+
+    def _send_success_response(self, operations: MichelineSequence, stack: MichelsonStack) -> Dict[str, Any]:
+        plain, html = '', ''
+
+        modified_items = self._find_stack_items(operations, stack)
+        if modified_items:
+            table = preformat_stack_table(modified_items)
+            plain += plain_table(table)
+            html += html_table(table)
+
+        lazy_diff = self._find_lazy_diff(operations)
+        if lazy_diff:
+            plain += plain_table(lazy_diff)
+            html += html_table(lazy_diff)
+
+        result = {
+                'data': {
+                'text/plain': plain,
+                'text/html': html
+            },
+            'metadata': {},
+            'execution_count': self.execution_count,
+        }
+
+        self.send_response(
+            self.iopub_socket,
+            'execute_result',
+            result,
+        )
+        return result
+
+    def _send_fail_response(self, error: Exception) -> Dict[str, Any]:
+        if isinstance(error, (MichelsonParserError, MichelsonRuntimeError)):
+            traceback = [error.format_stdout()]
+        else:
+            traceback = format_exception(error.__class__, error, None)
+        result = {
+            'status': 'error',
+            'ename': error.__class__.__name__,
+            'evalue': str(error),
+            'traceback': traceback,
+        }
+        self.send_response(
+            self.iopub_socket,
+            'stream',
+            {
+                'name': 'stderr',
+                'text': '\n'.join(traceback),
+            }
+        )
+        return result
+
     def do_execute(
         self, code, silent, store_history=True, user_expressions=None, allow_stdin=False
     ):
 
-        result = self.interpreter.execute(code)
+        interpreter_result = self.interpreter.execute(code)
 
-        if not silent and result.stdout:
-            self.send_response(
-                self.iopub_socket,
-                'stream',
-                {
-                    'name': 'stdout',
-                    'text': '\n'.join(result.stdout),
-                }
-            )
+        if not silent and interpreter_result.stdout:
+            self._stdout('\n'.join(interpreter_result.stdout))
 
-        if not result.error:
-            res = {
-                'status': 'ok',
-            }
+        if not interpreter_result.error:
             if not silent:
-                self.send_response(
-                    self.iopub_socket,
-                    'execute_result',
-                    format_result(result.operations, result.stack, self.execution_count),
-                )
+                return self._send_success_response(interpreter_result.operations, interpreter_result.stack)
         else:
-            if isinstance(result.error, (MichelsonParserError, MichelsonRuntimeError)):
-                traceback = [result.error.format_stdout()]
-            else:
-                traceback = format_exception(result.error.__class__, result.error, None)
-            res = {
-                'status': 'error',
-                'ename': result.error.__class__.__name__,
-                'evalue': str(result.error),
-                'traceback': traceback,
-            }
-            self.send_response(
-                self.iopub_socket,
-                'stream',
-                {
-                    'name': 'stderr',
-                    'text': '\n'.join(traceback),
-                }
-            )
-
-        res['execution_count'] = self.execution_count
-
-        return res
+            return self._send_fail_response(interpreter_result.error)
+        return {}
 
     def do_complete(self, code, cursor_pos):
         token, begin_pos, end_pos = parse_token(code, cursor_pos)
