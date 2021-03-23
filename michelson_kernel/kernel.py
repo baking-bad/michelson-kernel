@@ -69,14 +69,22 @@ def parse_token(line, cursor_pos):
     return line[begin_pos:end_pos], begin_pos, end_pos
 
 
-def preformat_contract_result_table(item) -> List[Dict[str, Any]]:
+def preformat_operations_table(items) -> List[Dict[str, Any]]:
     return [
         {
             'type': item.prim,
-            'value': item.to_python_object(item),
-        },
+            'value': item.to_python_object(),
+        }
+        for item in items
     ]
 
+def preformat_storage_table(item) -> List[Dict[str, Any]]:
+    return [
+        {
+            'type': item.prim,
+            'value': item.to_python_object(),
+        }
+    ]
 
 def preformat_stack_table(items: Iterable[MichelsonInstruction]) -> List[Dict[str, Any]]:
     return [
@@ -193,12 +201,12 @@ class MichelsonKernel(Kernel):
         contract_result = self._find_contract_result(instructions)
         if contract_result:
             header = 'Operations'
-            table = preformat_contract_result_table(contract_result.items[0])
+            table = preformat_operations_table(contract_result.items[0])
             plain += plain_table(table, header)
             html += html_table(table, header)
 
             header = 'Storage'
-            table = preformat_contract_result_table(contract_result.items[1])
+            table = preformat_storage_table(contract_result.items[1])
             plain += plain_table(table, header)
             html += html_table(table, header)
 
