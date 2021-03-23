@@ -1,19 +1,19 @@
 from collections import Iterable
 from traceback import format_exception
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List, Optional, Tuple, cast
 
-from pytezos import micheline_to_michelson
-from pytezos.michelson.instructions import CommitInstruction, BigMapInstruction, BigMapDiffInstruction
+from ipykernel.kernelbase import Kernel  # type: ignore
+from pytezos import MichelsonType, micheline_to_michelson
+from pytezos.michelson.instructions import BigMapDiffInstruction, CommitInstruction
 from pytezos.michelson.instructions.base import MichelsonInstruction
 from pytezos.michelson.micheline import MichelineSequence, MichelsonRuntimeError
-from pytezos.michelson.parse import MichelsonParserError, michelson_to_micheline
-from pytezos.michelson.stack import MichelsonStack
-from pytezos.michelson.types import PairType
-from tabulate import tabulate
-from ipykernel.kernelbase import Kernel
-
+from pytezos.michelson.parse import MichelsonParserError
 from pytezos.michelson.repl import Interpreter
+from pytezos.michelson.stack import MichelsonStack
 from pytezos.michelson.tags import prim_tags
+from pytezos.michelson.types import OperationType, PairType
+from tabulate import tabulate
+
 from michelson_kernel import __version__
 from michelson_kernel.docs import docs
 
@@ -62,21 +62,22 @@ static_macros = [
 ]
 
 
-def parse_token(line, cursor_pos):
+def parse_token(line: str, cursor_pos: int) -> Tuple[str, int, int]:
 
     begin_pos = next((i + 1 for i in range(cursor_pos - 1, 0, -1) if line[i] in ' ;({\n'), 0)
     end_pos = next((i for i in range(cursor_pos, len(line)) if line[i] in ' ;){\n'), len(line))
     return line[begin_pos:end_pos], begin_pos, end_pos
 
 
-def preformat_operations_table(items) -> List[Dict[str, Any]]:
+def preformat_operations_table(items: List[OperationType]) -> List[Dict[str, Any]]:
     return [
         {
             'type': item.prim,
-            'value': item.to_python_object(),
+            **item.content,
         }
         for item in items
     ]
+
 
 def preformat_storage_table(item) -> List[Dict[str, Any]]:
     return [
@@ -86,12 +87,14 @@ def preformat_storage_table(item) -> List[Dict[str, Any]]:
         }
     ]
 
-def preformat_stack_table(items: Iterable[MichelsonInstruction]) -> List[Dict[str, Any]]:
+
+def preformat_stack_table(items: List[MichelsonInstruction]) -> List[Dict[str, Any]]:
     return [
         {
             'index': i,
             'type': item.prim,
-            'value': item.to_python_object(),
+            # FIXME:
+            'value': item.to_python_object(),  # type: ignore
         }
         for i, item in enumerate(items)
     ]
@@ -106,7 +109,8 @@ def html_table(table: List[Dict[str, Any]], header: str) -> str:
 
     result = f'<h4>{header}</h4>'
     result += tabulate(list(map(pre_dict, table)), tablefmt='html', headers="keys")
-    result = result.replace('&lt;', '<').replace('&gt;', '>')  # tabulate escapes our <pre> tags
+    # NOTE: Tabulate escapes our <pre> tags
+    result = result.replace('&lt;', '<').replace('&gt;', '>')
     return result
 
 
@@ -180,7 +184,7 @@ class MichelsonKernel(Kernel):
             if not isinstance(operation, MichelsonInstruction):
                 continue
             if operation.stack_items_added:
-                return stack.items[-operation.stack_items_added:]
+                return cast(List[MichelsonInstruction], stack.items[-operation.stack_items_added :])
         return None
 
     def _find_lazy_diff(self, instructions: MichelineSequence) -> Optional[List[Dict[str, str]]]:
@@ -189,11 +193,13 @@ class MichelsonKernel(Kernel):
                 return instruction.lazy_diff
             elif isinstance(instruction, BigMapDiffInstruction) and instruction.lazy_diff:
                 return instruction.lazy_diff
+        return None
 
     def _find_contract_result(self, instructions: MichelineSequence) -> Optional[PairType]:
         for instruction in instructions.items[::-1]:
             if isinstance(instruction, CommitInstruction):
                 return instruction.result
+        return None
 
     def _send_success_response(self, instructions: MichelineSequence, stack: MichelsonStack) -> Dict[str, Any]:
         plain, html = '', ''
@@ -201,7 +207,7 @@ class MichelsonKernel(Kernel):
         contract_result = self._find_contract_result(instructions)
         if contract_result:
             header = 'Operations'
-            table = preformat_operations_table(contract_result.items[0])
+            table = preformat_operations_table(cast(List[OperationType], contract_result.items[0]))
             plain += plain_table(table, header)
             html += html_table(table, header)
 
@@ -211,7 +217,7 @@ class MichelsonKernel(Kernel):
             html += html_table(table, header)
 
         modified_items = self._find_stack_items(instructions, stack)
-        if modified_items and not contract_result:
+        if modified_items is not None and not contract_result:
             header = 'Stack updates'
             table = preformat_stack_table(modified_items)
             plain += plain_table(table, header)

@@ -4,6 +4,17 @@ install:
 debug:
 	pip install . --force --no-deps --user
 
+isort:
+	bash -c "python -m venv .venv; source .venv/bin/activate; pip install isort; isort michelson_kernel/kernel.py"
+
+black:
+	bash -c "python -m venv .venv; source .venv/bin/activate; pip install black; black -S -l 140 michelson_kernel/kernel.py"
+
+mypy:
+	bash -c "python -m venv .venv; source .venv/bin/activate; pip install mypy; mypy michelson_kernel/kernel.py"
+
+lint: isort black mypy
+
 publish:
 	python setup.py sdist
 	twine upload dist/*
