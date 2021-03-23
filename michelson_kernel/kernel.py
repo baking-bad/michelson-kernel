@@ -2,10 +2,11 @@ from collections import Iterable
 from traceback import format_exception
 from typing import List, Dict, Any, Optional
 
+from pytezos import micheline_to_michelson
 from pytezos.michelson.instructions import CommitInstruction, BigMapInstruction, BigMapDiffInstruction
 from pytezos.michelson.instructions.base import MichelsonInstruction
 from pytezos.michelson.micheline import MichelineSequence, MichelsonRuntimeError
-from pytezos.michelson.parse import MichelsonParserError
+from pytezos.michelson.parse import MichelsonParserError, michelson_to_micheline
 from pytezos.michelson.stack import MichelsonStack
 from pytezos.michelson.types import PairType
 from tabulate import tabulate
@@ -68,6 +69,15 @@ def parse_token(line, cursor_pos):
     return line[begin_pos:end_pos], begin_pos, end_pos
 
 
+def preformat_contract_result_table(item) -> List[Dict[str, Any]]:
+    return [
+        {
+            'type': item.prim,
+            'value': item.to_python_object(item),
+        },
+    ]
+
+
 def preformat_stack_table(items: Iterable[MichelsonInstruction]) -> List[Dict[str, Any]]:
     return [
         {
@@ -108,7 +118,6 @@ def preformat_lazy_diff_table(lazy_diff: List[Dict[str, Any]]) -> List[Dict[str,
                     'id': _id,
                     'action': 'alloc',
                     'key': '',
-                    'key_hash': '',
                     'value': '',
                 }
             )
@@ -117,7 +126,8 @@ def preformat_lazy_diff_table(lazy_diff: List[Dict[str, Any]]) -> List[Dict[str,
                 {
                     'id': _id,
                     'action': 'update',
-                    **update,
+                    'key': micheline_to_michelson(update['key']),
+                    'value': micheline_to_michelson(update['value']),
                 }
             )
     return table
@@ -161,8 +171,6 @@ class MichelsonKernel(Kernel):
                     return stack_items
             if not isinstance(operation, MichelsonInstruction):
                 continue
-            if isinstance(operation, CommitInstruction):
-                return operation.result
             if operation.stack_items_added:
                 return stack.items[-operation.stack_items_added:]
         return None
@@ -174,7 +182,7 @@ class MichelsonKernel(Kernel):
             elif isinstance(instruction, BigMapDiffInstruction) and instruction.lazy_diff:
                 return instruction.lazy_diff
 
-    def _find_result(self, instructions: MichelineSequence) -> Optional[PairType]:
+    def _find_contract_result(self, instructions: MichelineSequence) -> Optional[PairType]:
         for instruction in instructions.items[::-1]:
             if isinstance(instruction, CommitInstruction):
                 return instruction.result
@@ -182,9 +190,21 @@ class MichelsonKernel(Kernel):
     def _send_success_response(self, instructions: MichelineSequence, stack: MichelsonStack) -> Dict[str, Any]:
         plain, html = '', ''
 
+        contract_result = self._find_contract_result(instructions)
+        if contract_result:
+            header = 'Operations'
+            table = preformat_contract_result_table(contract_result.items[0])
+            plain += plain_table(table, header)
+            html += html_table(table, header)
+
+            header = 'Storage'
+            table = preformat_contract_result_table(contract_result.items[1])
+            plain += plain_table(table, header)
+            html += html_table(table, header)
+
         modified_items = self._find_stack_items(instructions, stack)
-        if modified_items:
-            header = 'Result'
+        if modified_items and not contract_result:
+            header = 'Stack updates'
             table = preformat_stack_table(modified_items)
             plain += plain_table(table, header)
             html += html_table(table, header)
