@@ -1,5 +1,28 @@
+install:
+	poetry install
+
+post-install:
+	poetry run python post-install.py
+
 debug:
-	pip install . --force --no-deps --user
+	pip install . --force --no-deps
+
+isort:
+	poetry run isort src
+
+pylint:
+	poetry run pylint src || poetry run pylint-exit $$?
+
+mypy:
+	poetry run mypy src
+
+lint: isort pylint mypy
+
+build:
+	poetry build
+
+image:
+	docker build . -t michelson-kernel
 
 publish:
 	python setup.py sdist
