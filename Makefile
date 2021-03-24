@@ -1,19 +1,28 @@
 install:
-	bash -c "python -m venv .venv; source .venv/bin/activate; pip install wheel jupyter; pip install .; pip install -U pytezos-3.0.4-py3-none-any.whl"
+	poetry install
+
+post-install:
+	poetry run python post-install.py
 
 debug:
-	pip install . --force --no-deps --user
+	pip install . --force --no-deps
 
 isort:
-	bash -c "python -m venv .venv; source .venv/bin/activate; pip install isort; isort michelson_kernel/kernel.py"
+	poetry run isort src
 
-black:
-	bash -c "python -m venv .venv; source .venv/bin/activate; pip install black; black -S -l 140 michelson_kernel/kernel.py"
+pylint:
+	poetry run pylint src || poetry run pylint-exit $$?
 
 mypy:
-	bash -c "python -m venv .venv; source .venv/bin/activate; pip install mypy; mypy michelson_kernel/kernel.py"
+	poetry run mypy src
 
-lint: isort black mypy
+lint: isort pylint mypy
+
+build:
+	poetry build
+
+image:
+	docker build . -t michelson-kernel
 
 publish:
 	python setup.py sdist

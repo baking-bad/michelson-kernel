@@ -1,12 +1,13 @@
-from collections import Iterable
 from traceback import format_exception
 from typing import Any, Dict, List, Optional, Tuple, cast
 
 from ipykernel.kernelbase import Kernel  # type: ignore
 from pytezos import MichelsonType, micheline_to_michelson
-from pytezos.michelson.instructions import BigMapDiffInstruction, CommitInstruction
+from pytezos.michelson.instructions import (BigMapDiffInstruction,
+                                            CommitInstruction)
 from pytezos.michelson.instructions.base import MichelsonInstruction
-from pytezos.michelson.micheline import MichelineSequence, MichelsonRuntimeError
+from pytezos.michelson.micheline import (MichelineSequence,
+                                         MichelsonRuntimeError)
 from pytezos.michelson.parse import MichelsonParserError
 from pytezos.michelson.repl import Interpreter
 from pytezos.michelson.stack import MichelsonStack
